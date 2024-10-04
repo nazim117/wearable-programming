@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Wearable Programming"
 include(":app")
+include(":wearos")
