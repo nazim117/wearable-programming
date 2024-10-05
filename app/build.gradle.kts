@@ -39,8 +39,7 @@ android {
 }
 
 dependencies {
-
-    implementation (libs.play.services.wearable.v1800)
+    implementation(libs.play.services.wearable.v1810)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

@@ -8,7 +8,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.wearos"
+        applicationId = "com.example.wearableprogramming"
         minSdk = 34
         targetSdk = 34
         versionCode = 1
@@ -50,7 +50,7 @@ android {
 
 dependencies {
 
-    implementation(libs.play.services.wearable)
+    implementation(libs.play.services.wearable.v1810)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.tooling.preview)

@@ -1,5 +1,6 @@
 [versions]
 agp = "8.6.0"
+googlePlayServicesWearable = "18.1.0"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
 junit = "4.13.2"
@@ -42,6 +43,7 @@ androidx-wear-tooling-preview = { group = "androidx.wear", name = "wear-tooling-
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 play-services-wearable-v1800 = { module = "com.google.android.gms:play-services-wearable", version.ref = "playServicesWearableVersion" }
+play-services-wearable-v1810 = { module = "com.google.android.gms:play-services-wearable", version.ref = "googlePlayServicesWearable" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

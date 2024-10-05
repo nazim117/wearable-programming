@@ -1,4 +1,4 @@
-package com.example.wearos.presentation
+package com.example.wearableprogramming
 
 import android.os.Bundle
 import android.os.Handler
@@ -22,7 +22,7 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.example.wearos.presentation.theme.WearableProgrammingTheme
+import com.example.wearableprogramming.theme.WearableProgrammingTheme
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 
@@ -32,61 +32,56 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Set content for Compose UI
         setContent {
             WearApp(heartRate)
         }
 
-        // Start simulating heart rate data
+        checkConnection()
         simulateHeartRateData()
-
-        // Check connection with phone app
-        checkWearableConnection()
-    }
-
-    private fun checkWearableConnection() {
-        Wearable.getNodeClient(this).connectedNodes
-            .addOnSuccessListener { nodes ->
-                if (nodes.isNotEmpty()) {
-                    for (node in nodes) {
-                        Log.d("WearOS", "Connected to node: ${node.displayName}")
-                    }
-                } else {
-                    Log.d("WearOS", "No connected nodes found")
-                }
-            }
-            .addOnFailureListener {
-                Log.e("WearOS", "Failed to retrieve connected nodes", it)
-            }
     }
 
     private fun simulateHeartRateData() {
         val handler = Handler(Looper.getMainLooper())
         val runnable = object : Runnable {
             override fun run() {
-                // Generate a random heart rate between 60 and 120 bpm
                 val simulatedHeartRate = (60..120).random().toFloat()
                 heartRate = simulatedHeartRate
 
                 sendHeartRateToPhone(simulatedHeartRate)
-                handler.postDelayed(this, 2000) // Update every 2 seconds
+                handler.postDelayed(this, 3000)
             }
         }
         handler.post(runnable)
     }
 
-    private fun sendHeartRateToPhone(heartRate: Float) {
-        Log.d("WearOS", "Preparing to send heart rate: $heartRate bpm")
-        val dataMapRequest = PutDataMapRequest.create("/heart_rate")
-        dataMapRequest.dataMap.putFloat("heart_rate", heartRate)
-
-        val putDataRequest = dataMapRequest.asPutDataRequest().setUrgent()
-        Wearable.getDataClient(this).putDataItem(putDataRequest)
-            .addOnSuccessListener { dataItem ->
-                Log.d("WearOS", "Heart rate sent successfully: $heartRate bpm")
-                Log.d("WearOS", "DataItem: ${dataItem.uri}")
+    private fun checkConnection(){
+        Wearable.getNodeClient(this).connectedNodes
+            .addOnSuccessListener { nodes ->
+                if(nodes.isNotEmpty()){
+                    Log.d("Connection", "Connected to ${nodes.size} nodes")
+                    nodes.forEach { node ->
+                        Log.d("Connection", "Node ${node.id}: ${node.displayName}")
+                    }
+                } else {
+                    Log.e("Connection", "No nodes connected")
+                }
             }
-            .addOnFailureListener {e ->
+            .addOnFailureListener { e ->
+                Log.e("Connection", "Failed to get connected nodes", e)
+            }
+    }
+
+    private fun sendHeartRateToPhone(heartRate: Float) {
+        val dataMap = PutDataMapRequest.create("/heart_rate").apply {
+            dataMap.putFloat("heart_rate", heartRate)
+        }
+        val request = dataMap.asPutDataRequest().setUrgent()
+
+        Wearable.getDataClient(this).putDataItem(request)
+            .addOnSuccessListener {
+                Log.d("WearOS", "Heart rate sent successfully: $heartRate")
+            }
+            .addOnFailureListener { e ->
                 Log.e("WearOS", "Failed to send heart rate", e)
             }
     }
