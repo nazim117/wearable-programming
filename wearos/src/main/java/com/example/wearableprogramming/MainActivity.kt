@@ -6,58 +6,71 @@ import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.TimeText
+import androidx.compose.ui.unit.dp
+import androidx.wear.compose.material.*
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.example.wearableprogramming.theme.WearableProgrammingTheme
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 
 class MainActivity : ComponentActivity() {
     private var heartRate: Float? by mutableStateOf(null)
+    private var isMonitoring: Boolean by mutableStateOf(false)
+    private lateinit var handler: Handler
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        handler = Handler(Looper.getMainLooper())
+
         setContent {
-            WearApp(heartRate)
+            WearApp(
+                heartRate = heartRate,
+                isMonitoring = isMonitoring,
+                onToggleMonitoring = { toggleHeartRateMonitoring() }
+            )
         }
 
         checkConnection()
         simulateHeartRateData()
     }
 
+    private fun toggleHeartRateMonitoring() {
+        if (isMonitoring) {
+            handler.removeCallbacksAndMessages(null)
+        } else {
+            simulateHeartRateData()
+        }
+        isMonitoring = !isMonitoring
+    }
+
     private fun simulateHeartRateData() {
-        val handler = Handler(Looper.getMainLooper())
         val runnable = object : Runnable {
             override fun run() {
                 val simulatedHeartRate = (60..120).random().toFloat()
                 heartRate = simulatedHeartRate
 
                 sendHeartRateToPhone(simulatedHeartRate)
-                handler.postDelayed(this, 3000)
+                if (isMonitoring) {
+                    handler.postDelayed(this, 3000)
+                }
             }
         }
         handler.post(runnable)
     }
 
-    private fun checkConnection(){
+    private fun checkConnection() {
         Wearable.getNodeClient(this).connectedNodes
             .addOnSuccessListener { nodes ->
-                if(nodes.isNotEmpty()){
+                if (nodes.isNotEmpty()) {
                     Log.d("Connection", "Connected to ${nodes.size} nodes")
                     nodes.forEach { node ->
                         Log.d("Connection", "Node ${node.id}: ${node.displayName}")
@@ -88,37 +101,62 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun WearApp(heartRate: Float?) {
+fun WearApp(
+    heartRate: Float?,
+    isMonitoring: Boolean,
+    onToggleMonitoring: () -> Unit,
+) {
     WearableProgrammingTheme {
-        Box(
+        ScalingLazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colors.background),
-            contentAlignment = Alignment.Center
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TimeText()
+            item {
+                Card(
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colors.surface,
+                        contentColor = MaterialTheme.colors.onSurface
+                    )
+                ) {
+                    Text(
+                        text = if (heartRate != null) "Heart Rate: ${heartRate.toInt()} bpm" else "Heart Rate: -- bpm",
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.title1,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
 
-            if (heartRate != null) {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = "Heart Rate: $heartRate bpm",
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colors.primary
-                )
-            } else {
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = "Heart Rate: -- bpm",
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colors.primary
+            item {
+                Chip(
+                    onClick = onToggleMonitoring,
+                    label = {
+                        Text(
+                            if (isMonitoring) "Stop Monitoring" else "Start Monitoring",
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colors.onSurface
+                        )
+                    },
+                    colors = ChipDefaults.secondaryChipColors()
                 )
             }
         }
     }
 }
 
+
+
 @Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    WearApp(null)
+    WearApp(
+        heartRate = 72f,
+        isMonitoring = false,
+        onToggleMonitoring = {}
+    )
 }
